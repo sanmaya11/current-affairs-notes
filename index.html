@@ -84,6 +84,7 @@ h1{font:600 clamp(30px,4.4vw,42px)/1.12 var(--serif);letter-spacing:-.015em;marg
 .pager{display:flex;gap:8px;margin-left:auto}
 .pbtn{border:1px solid var(--line2);background:var(--card);border-radius:8px;padding:5px 11px;font-size:13px;color:var(--ink2);cursor:pointer}
 .pbtn:hover{border-color:var(--muted);text-decoration:none}.pbtn[aria-disabled="true"]{opacity:.35;pointer-events:none}
+.litechip{font-size:12px;font-weight:600;color:var(--gs1);background:color-mix(in srgb,var(--gs1) 12%,transparent);border-radius:99px;padding:2px 9px}
 .progress{margin:22px 0 26px;display:flex;align-items:center;gap:12px;font-size:13px;color:var(--muted)}
 .bar{flex:1;height:6px;border-radius:99px;background:var(--line);overflow:hidden}.bar i{display:block;height:100%;background:var(--good);border-radius:99px;transition:width .3s}
 
@@ -127,6 +128,8 @@ ol.steps{margin:0;padding:0;list-style:none;counter-reset:s}
 ol.steps li{counter-increment:s;position:relative;padding:4px 0 4px 32px;color:var(--ink2)}
 ol.steps li::before{content:counter(s);position:absolute;left:0;top:6px;width:21px;height:21px;border-radius:50%;background:var(--hover);
   font-size:12px;font-weight:600;display:grid;place-items:center;color:var(--ink2)}
+.statics{margin:0;padding:0;list-style:none;border-left:3px solid var(--gs2);background:color-mix(in srgb,var(--gs2) 6%,transparent);border-radius:0 12px 12px 0}
+.statics li{padding:7px 14px;font-size:14.5px;color:var(--ink2)}.statics li+li{border-top:1px solid var(--line)}
 .concepts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .concept{border:1px solid var(--line);border-radius:12px;padding:11px 13px;background:var(--bg)}
 .concept b{display:block;font-size:14px;margin-bottom:3px;color:var(--ink)}.concept span{font-size:13.5px;color:var(--ink2);line-height:1.5}
@@ -351,6 +354,7 @@ mark{background:var(--fact);color:inherit;border-radius:3px;padding:0 2px}
       var h = '<div class="wrap">';
       h += '<div class="eyebrow">Daily current affairs</div><h1>' + esc(fmt(date, { weekday: "long", day: "numeric", month: "long", year: "numeric" })) + "</h1>";
       h += '<div class="meta"><span>' + n + " topics</span><span>·</span><span>" + (day.stories_read ? day.stories_read + " stories read" : "The Hindu & Indian Express") +
+        (m.lite ? '</span><span class="litechip" title="Written by a faster model while the free daily limit was used up. It is rewritten in full automatically when there is room.">Short version · full notes coming</span><span>' : "") +
         '</span><div class="pager"><a class="pbtn" aria-disabled="' + !older + '" href="' + (older ? "#/d/" + older.date : "#") + '">← Older</a><a class="pbtn" aria-disabled="' + !newer + '" href="' + (newer ? "#/d/" + newer.date : "#") + '">Newer →</a></div></div>';
       h += '<div class="progress"><span id="pg-t">' + done + " of " + n + ' revised</span><div class="bar"><i id="pg-b" style="width:' + (100 * done / n) + '%"></i></div></div>';
       h += '<div class="grid">' + day.notes.map(function (t, i) {
@@ -384,6 +388,7 @@ mark{background:var(--fact);color:inherit;border-radius:3px;padding:0 2px}
     h += '<div class="why"><b>Why in news</b>' + esc(t.why_in_news) + "</div>";
     var bg = String(t.background || "").split(/\n\s*\n/).filter(function (p) { return p.trim(); });
     if (bg.length) h += '<div class="sec prose"><h4>Background &amp; context</h4>' + bg.map(function (p) { return "<p>" + esc(p) + "</p>"; }).join("") + "</div>";
+    if ((t.source_static || []).length) h += '<div class="sec"><h4>Static context from the articles</h4>' + list(t.source_static, "statics") + "</div>";
     if ((t.key_points || []).length) h += '<div class="sec"><h4>Key points</h4>' + list(t.key_points) + "</div>";
     if ((t.static_concepts || []).length) h += '<div class="sec"><h4>Syllabus links</h4><div class="concepts">' + t.static_concepts.map(function (c) {
       return '<div class="concept"><b>' + esc(c.term) + "</b><span>" + esc(c.explanation) + "</span></div>"; }).join("") + "</div></div>";
