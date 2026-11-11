@@ -6,9 +6,10 @@
 
   /* ================================================================ data + storage */
   var SITE = !!window.NOTES_SITE;
-  var M = [], DAYS = {}, PYQ = null, KEY = null, META = {}, booted = false;
+  var M = [], DAYS = {}, PYQ = null, SUBJ = null, KEY = null, META = {}, booted = false;
   window.NOTES_LOAD = function (date, data) { DAYS[date] = data; };
   window.NOTES_PYQ_LOAD = function (data) { PYQ = data; };
+  window.NOTES_SUBJECTS_LOAD = function (data) { SUBJ = data; };
 
   var PAPERS = [
     ["GS1", "History, Geography, Society", "--gs1"], ["GS2", "Polity, Governance, IR", "--gs2"],
@@ -48,7 +49,8 @@
       star: '<path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/>',
       clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
       note: '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13 7 4 4"/>',
-      tick: '<path d="m5 12 5 5 9-10"/>'
+      tick: '<path d="m5 12 5 5 9-10"/>',
+      layers: '<path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/>'
     };
     return '<svg class="i" viewBox="0 0 24 24">' + (P[name] || "") + "</svg>";
   }
@@ -92,6 +94,17 @@
       pyqPromise.catch(function () { pyqPromise = null; });
     }
     return pyqPromise;
+  }
+
+  var subjPromise = null;
+  function loadSubjects() {
+    if (SUBJ) return Promise.resolve(SUBJ);
+    if (!subjPromise) {
+      subjPromise = (SITE ? decryptWith(KEY, "data/subjects.enc?v=" + (META.subjects_v || ""), true).then(function (d) { SUBJ = d; })
+        : loadScript("data/subjects.js?" + Date.now())).then(function () { SUBJ = SUBJ || {}; return SUBJ; });
+      subjPromise.catch(function () { subjPromise = null; });
+    }
+    return subjPromise;
   }
 
   /* ================================================================ study-data helpers */
@@ -198,6 +211,7 @@
     $("nav").innerHTML =
       link("#/", "home", "Home", r.name === "home") +
       link(M[0] ? "#/d/" + M[0].date : "#/", "news", "Latest notes", r.name === "day" && M[0] && r.day === M[0].date) +
+      link("#/subjects", "layers", "Subjects &amp; syllabus", r.name === "subjects" || r.name === "subject") +
       link("#/pyq", "book", "Previous year questions", r.name === "pyq") +
       link("#/practice", "check", "Practice MCQs", r.name === "practice") +
       link("#/cards", "cards", "Flashcards", r.name === "cards", due || "", "due") +
@@ -430,7 +444,8 @@
         (K === "Mains" || f.paper ? '<select data-f="paper"><option value="">All papers</option>' + ["GS1", "GS2", "GS3", "GS4"].map(function (p) { return "<option" + (f.paper === p ? " selected" : "") + ">" + p + "</option>"; }).join("") + "</select>" : "") +
         '<input type="search" data-f="q" placeholder="Search questions" value="' + esc(f.q || "") + '"><label><input type="checkbox" data-f="saved"' + (f.saved ? " checked" : "") + "> Saved only</label></div>";
       var title = f.topic ? topicName(f.topic) : "";
-      h += '<div class="meta" style="margin-bottom:12px">' + rows.length + " question" + (rows.length === 1 ? "" : "s") + (title ? " · " + esc(title) : "") + (f.topic ? ' · <a href="#/practice?src=pyq&topic=' + f.topic + '">Practise these →</a>' : "") + "</div>";
+      h += '<div class="meta" style="margin-bottom:12px">' + rows.length + " question" + (rows.length === 1 ? "" : "s") + (title ? " · " + esc(title) : "") +
+        (f.topic ? ' · <a href="#/subjects/' + f.topic + '">Read the notes →</a> · <a href="#/practice?src=pyq&topic=' + f.topic + '">Practise these →</a>' : "") + "</div>";
       h += '<div id="qlist"></div><div class="more" id="qmore"></div>';
       page(h, true);
       var shown = 0;
@@ -476,6 +491,67 @@
       : '<div class="from">Answer outline coming soon.</div>');
     return '<div class="qcard">' + head + body + '<div class="tfoot" style="margin-top:12px;padding-top:12px">' +
       actions("q:" + q.id, { kind: "pyq", title: q.q.slice(0, 140), label: paperLabel(q) + " " + q.year + " · Q" + q.n, href: "#/pyq/" + kind.toLowerCase() + "?q=" + encodeURIComponent(q.q.split(/\s+/).slice(0, 6).join(" ")) + "&year=" + q.year }) + "</div></div>";
+  }
+
+  /* ================================================================ subjects */
+  function pyqCountsBy() {
+    var by = {}; (PYQ ? PYQ.questions : []).forEach(function (q) { by[q.topic] = by[q.topic] || { Prelims: 0, Mains: 0, Essay: 0, years: {} }; by[q.topic][qKind(q)]++; by[q.topic].years[q.year] = 1; });
+    return by;
+  }
+  function renderSubjects() {
+    page('<div class="empty">Loading subjects…</div>', true);
+    Promise.all([loadPyq(), loadSubjects().catch(function () { return {}; })]).then(function () {
+      var by = pyqCountsBy(), total = 0, studied = 0;
+      SUBJECTS.forEach(function (s) { s.topics.forEach(function (t) { total++; if (U.revised["s:" + t.id]) studied++; }); });
+      var h = '<div class="eyebrow">UPSC CSE syllabus</div><h1>Subjects</h1><div class="meta">' + Object.keys(SUBJ || {}).length + " of " + total +
+        " topics have notes · " + studied + " marked studied · each topic links to every PYQ UPSC has asked on it</div>" +
+        '<div class="progress"><span>' + pct(studied, total) + '% of the syllabus studied</span><div class="bar"><i style="width:' + pct(studied, total) + '%"></i></div></div><div class="subjects">' +
+        SUBJECTS.map(function (s) {
+          return '<div class="subj"><h3>' + esc(s.subject) + "</h3>" + s.topics.map(function (t) {
+            var c = by[t.id], n = c ? c.Prelims + c.Mains + c.Essay : 0, has = SUBJ && SUBJ[t.id];
+            return '<a href="#/subjects/' + t.id + '" title="' + esc(t.covers) + '">' + (U.revised["s:" + t.id] ? "✓ " : "") + esc(t.title) +
+              "<span>" + (has ? "" : "notes soon · ") + n + " PYQ" + (n === 1 ? "" : "s") + "</span></a>";
+          }).join("") + "</div>";
+        }).join("") + "</div>";
+      page(h, true);
+    }, function () { page('<div class="empty">Could not load the syllabus.</div>', true); });
+  }
+  function renderSubject(id) {
+    page('<div class="empty">Loading…</div>', false, true);
+    Promise.all([loadPyq(), loadSubjects().catch(function () { return {}; })]).then(function () {
+      var t = TOPIC[id]; if (!t) { page('<div class="empty">Unknown topic.</div>'); return; }
+      var n = SUBJ && SUBJ[id], qs = PYQ.questions.filter(function (q) { return q.topic === id; }).sort(function (a, b) { return b.year - a.year; });
+      var c = { Prelims: 0, Mains: 0, Essay: 0 }; qs.forEach(function (q) { c[qKind(q)]++; });
+      var siblings = []; SUBJECTS.forEach(function (s) { if (s.subject === t.subject) siblings = s.topics; });
+      var idx = siblings.findIndex(function (x) { return x.id === id; }), prev = siblings[idx - 1], next = siblings[idx + 1];
+      var h = '<div class="eyebrow"><a href="#/subjects">Subjects</a> · ' + esc(t.subject) + "</div><h1>" + esc(t.title) + "</h1>" +
+        '<div class="meta"><span class="gsl">' + t.papers.map(badge).join("") + "</span><span>" + qs.length + " PYQs (" + c.Prelims + " Prelims · " + c.Mains + " Mains" + (c.Essay ? " · " + c.Essay + " Essay" : "") + ")</span>" +
+        '<div class="pager">' + (prev ? '<a class="btn" href="#/subjects/' + prev.id + '">← ' + esc(prev.title.split(/[,:&(]/)[0].trim()) + "</a>" : "") + (next ? '<a class="btn" href="#/subjects/' + next.id + '">' + esc(next.title.split(/[,:&(]/)[0].trim()) + " →</a>" : "") + "</div></div>";
+      h += '<div class="tfoot" style="border:0;padding-top:6px;margin-top:10px">' + actions("s:" + id, { kind: "subject", title: t.title, label: t.subject, href: "#/subjects/" + id }, "s:" + id).replace(/Mark revised/g, "Mark studied").replace(/>Revised</g, ">Studied<") + "</div>";
+      var toc = [];
+      if (n) {
+        h += '<article class="topic" style="margin-top:18px">';
+        h += '<div class="sec prose" id="ov" style="margin-top:0"><h4>Overview</h4>' + n.overview.split(/\n\s*\n/).map(function (p) { return "<p>" + esc(p) + "</p>"; }).join("") + "</div>"; toc.push(["ov", "Overview"]);
+        n.sections.forEach(function (sec, i) { h += '<div class="sec" id="sx' + i + '"><h4>' + esc(sec.heading) + "</h4>" + list(sec.points) + "</div>"; toc.push(["sx" + i, sec.heading]); });
+        h += '<div class="sec" id="kt"><h4>Key terms</h4><div class="concepts">' + n.key_terms.map(function (k) { return '<div class="concept"><b>' + esc(k.term) + "</b><span>" + esc(k.meaning) + "</span></div>"; }).join("") + "</div></div>"; toc.push(["kt", "Key terms"]);
+        h += '<div class="sec" id="pf"><h4>Prelims facts</h4>' + list(n.prelims_facts, "facts") + "</div>"; toc.push(["pf", "Prelims facts"]);
+        h += '<div class="sec" id="ma"><h4>How Mains asks it</h4>' + list(n.mains_angles, "steps", "ol") + "</div>"; toc.push(["ma", "Mains angles"]);
+        h += '<div class="sec"><h4>Standard sources</h4>' + list(n.sources) + "</div></article>";
+      } else h += '<section class="panel" style="margin-top:18px"><p style="margin:0;color:var(--muted)">Notes for this topic are being written and will appear here shortly. Its previous year questions are below.</p></section>';
+      h += '<h2 class="sec-title" id="pq">Asked by UPSC<a href="#/pyq?topic=' + id + '">All ' + qs.length + " →</a></h2>"; toc.push(["pq", "Previous year questions"]);
+      if (qs.length) {
+        var years = {}; qs.forEach(function (q) { years[q.year] = (years[q.year] || 0) + 1; });
+        h += '<div class="meta" style="margin-bottom:12px">' + Object.keys(years).sort().reverse().map(function (y) { return y + ": " + years[y]; }).join(" · ") +
+          (c.Prelims ? ' · <a href="#/practice?src=pyq&topic=' + id + '">Practise the Prelims ones →</a>' : "") + '</div><div id="spq"></div>';
+      } else h += '<p style="color:var(--muted)">No previous year questions tagged to this topic yet.</p>';
+      if (n) h += '<p class="disclaimer">Notes written by Claude from general knowledge for revision. Check figures, dates and recent changes against NCERTs, standard books or official sources.</p>';
+      page(h, false, true);
+      rail.innerHTML = "<h6>On this page</h6>" + toc.map(function (x) { return '<a href="javascript:void 0" data-go="' + x[0] + '">' + esc(x[1]) + "</a>"; }).join("");
+      rail.querySelectorAll("[data-go]").forEach(function (a) { a.addEventListener("click", function () { $(a.dataset.go).scrollIntoView({ behavior: "smooth" }); }); });
+      bindActions(main);
+      if (qs.length) { var box = $("spq"); box.innerHTML = qs.slice(0, 10).map(qCard).join(""); bindMcqs(box); bindToggles(box); bindActions(box); }
+      window.scrollTo(0, 0);
+    }, function () { page('<div class="empty">Could not load this topic.</div>'); });
   }
 
   /* ================================================================ practice */
@@ -565,19 +641,22 @@
   var NEW_PER_DAY = 20;
   function renderCards() {
     page('<div class="empty">Loading cards…</div>');
-    loadAllDays().then(function () {
+    Promise.all([loadAllDays(), loadSubjects().catch(function () { return {}; })]).then(function () {
       var deck = [];
+      Object.keys(SUBJ || {}).forEach(function (tid) {
+        (SUBJ[tid].key_terms || []).forEach(function (c, k) { deck.push({ id: "s:" + tid + "#" + k, front: c.term, back: c.meaning, from: SUBJ[tid].title, href: "#/subjects/" + tid }); });
+      });
       M.forEach(function (m) {
         var d = DAYS[m.date]; if (!d) return;
         d.notes.forEach(function (t, i) {
-          (t.static_concepts || []).forEach(function (c, k) { deck.push({ id: m.date + "#" + i + "#" + k, front: c.term, back: c.explanation, from: t.title, date: m.date, i: i }); });
+          (t.static_concepts || []).forEach(function (c, k) { deck.push({ id: m.date + "#" + i + "#" + k, front: c.term, back: c.explanation, from: t.title, href: "#/d/" + m.date + "/" + (i + 1) }); });
         });
       });
       var now = Date.now(), tk = todayKey(), newToday = store.get("newcards", {})[tk] || 0;
       var due = deck.filter(function (c) { return U.cards[c.id] && U.cards[c.id].due <= now; });
       var fresh = deck.filter(function (c) { return !U.cards[c.id]; });
       var queue = due.concat(fresh.slice(0, Math.max(0, NEW_PER_DAY - newToday)));
-      var h = '<div class="eyebrow">Revision</div><h1>Flashcards</h1><div class="meta">' + deck.length + " cards from your notes' syllabus links · " +
+      var h = '<div class="eyebrow">Revision</div><h1>Flashcards</h1><div class="meta">' + deck.length + " cards from subject key terms and your daily notes · " +
         due.length + " due · " + fresh.length + " new (up to " + NEW_PER_DAY + " a day)</div>";
       if (!queue.length) { page(h + '<div class="empty">All caught up. New cards arrive with each day\'s notes.</div>'); return; }
       page(h + '<div id="fc"></div>');
@@ -588,7 +667,7 @@
         $("fc").innerHTML = '<div class="score" style="margin-top:20px"><span>Card <b>' + (at + 1) + "</b> of " + queue.length + "</span><span>" + (st ? "Review" : "New") + "</span></div>" +
           '<div class="fcard" id="card"><div class="fface"><div class="ft">' + esc(c.front) + '</div><div class="fb" id="back" hidden>' + esc(c.back) + '</div><div class="fm" id="hint">Recall what it means, then tap to check</div></div></div>' +
           '<div class="fbtns" id="rate" hidden><button class="again" data-r="0">Again<small>soon</small></button><button data-r="1">Hard<small>tomorrow</small></button><button class="good" data-r="2">Good<small>' + GAPS[Math.min((st ? st.box : 0) + 1, GAPS.length - 1)] + 'd</small></button><button data-r="3">Easy<small>' + GAPS[Math.min((st ? st.box : 0) + 2, GAPS.length - 1)] + "d</small></button></div>" +
-          '<div class="from">From <a href="#/d/' + c.date + "/" + (c.i + 1) + '">' + esc(c.from) + "</a></div>";
+          '<div class="from">From <a href="' + c.href + '">' + esc(c.from) + "</a></div>";
         $("card").addEventListener("click", function () { $("back").hidden = false; $("rate").hidden = false; $("hint").textContent = "How well did you recall it?"; });
         $("rate").addEventListener("click", function (e) {
           var b = e.target.closest("[data-r]"); if (!b) return;
@@ -615,11 +694,11 @@
     var keys = Object.keys(items).filter(function (k) { return tab === "all" || (tab === "notes" ? items[k].note : items[k].kind === tab); })
       .sort(function (a, b) { return (items[b].t || 0) - (items[a].t || 0); });
     var h = '<div class="eyebrow">Your library</div><h1>Saved &amp; my notes</h1><div class="meta">Stored in this browser. Use backup to move them to another device.</div>' +
-      '<div class="tabs">' + [["all", "Everything"], ["topic", "Daily topics"], ["pyq", "PYQs"], ["notes", "With my notes"]].map(function (t) {
+      '<div class="tabs">' + [["all", "Everything"], ["topic", "Daily topics"], ["subject", "Subjects"], ["pyq", "PYQs"], ["notes", "With my notes"]].map(function (t) {
         return '<a class="tab' + (tab === t[0] ? " on" : "") + '" href="#/saved/' + t[0] + '">' + t[1] + "</a>"; }).join("") + "</div>";
     h += '<div id="savedlist">' + keys.map(function (k) {
       var it = items[k];
-      return '<div class="row"><div class="rd">' + (it.kind === "topic" && it.date ? "<b>" + d8(it.date).getDate() + "</b>" + esc(fmt(it.date, { month: "short", year: "numeric" })) : "<b>PYQ</b>" + esc(it.label || "")) +
+      return '<div class="row"><div class="rd">' + (it.kind === "topic" && it.date ? "<b>" + d8(it.date).getDate() + "</b>" + esc(fmt(it.date, { month: "short", year: "numeric" })) : "<b>" + (it.kind === "subject" ? "Subject" : "PYQ") + "</b>" + esc(it.label || "")) +
         '</div><div><h3><a href="' + esc(it.href) + '">' + esc(it.title) + "</a></h3>" + (it.note ? '<div class="mynote">' + esc(it.note) + "</div>" : "") +
         '</div><div class="acts">' + (it.starred ? '<button class="btn sm" data-unsave="' + esc(k) + '">Unsave</button>' : "") + (it.note ? '<button class="btn sm" data-delnote="' + esc(k) + '">Delete note</button>' : "") + "</div></div>";
     }).join("") + "</div>";
@@ -653,7 +732,7 @@
   /* ================================================================ search */
   function renderSearch(q) {
     page('<div class="empty">Searching…</div>', true);
-    loadPyq().catch(function () { return null; }).then(function () {
+    Promise.all([loadPyq().catch(function () { return null; }), loadSubjects().catch(function () { return null; })]).then(function () {
       var words = q.toLowerCase().split(/\s+/).filter(Boolean), rows = [], bites = [];
       var match = function (s) { s = s.toLowerCase(); return words.every(function (w) { return s.indexOf(w) >= 0; }); };
       M.forEach(function (m) {
@@ -661,11 +740,14 @@
         (m.bites || []).forEach(function (b) { if (match(b)) bites.push("<li>" + esc(b) + ' <a href="#/d/' + m.date + '/bites">' + esc(fmt(m.date, { day: "numeric", month: "short" })) + "</a></li>"); });
       });
       var pq = PYQ ? PYQ.questions.filter(function (x) { return match(x.q + " " + (x.options || []).join(" ") + " " + topicName(x.topic)); }) : [];
-      var h = '<div class="eyebrow">Search</div><h1>“' + esc(q) + '”</h1><div class="meta">' + rows.length + " daily topics · " + pq.length + " PYQs · " + bites.length + " quick bites</div>";
+      var subs = Object.keys(SUBJ || {}).filter(function (k) { var n = SUBJ[k]; return match([n.title, n.subject, n.overview, (n.key_terms || []).map(function (t) { return t.term; }).join(" "), (n.sections || []).map(function (x) { return x.heading + " " + x.points.join(" "); }).join(" ")].join(" ")); });
+      var h = '<div class="eyebrow">Search</div><h1>“' + esc(q) + '”</h1><div class="meta">' + subs.length + " subject topics · " + rows.length + " daily topics · " + pq.length + " PYQs · " + bites.length + " quick bites</div>";
+      if (subs.length) h += '<h2 class="sec-title">Subjects</h2>' + subs.map(function (k) {
+        return '<a class="row" href="#/subjects/' + k + '"><div class="rd"><b>' + esc(SUBJ[k].subject.split(" ")[0]) + '</b></div><div><h3>' + esc(SUBJ[k].title) + "</h3><p>" + esc(SUBJ[k].overview.slice(0, 180)) + "…</p></div></a>"; }).join("");
       if (rows.length) h += '<h2 class="sec-title">Daily notes</h2>' + rows.join("");
       if (pq.length) h += '<h2 class="sec-title">Previous year questions<a href="#/pyq/' + qKind(pq[0]).toLowerCase() + "?q=" + encodeURIComponent(q) + '">Open in PYQs →</a></h2><div id="sq"></div>';
       if (bites.length) h += '<section class="panel" style="margin-top:22px"><h2>Quick bites</h2><ul class="bites">' + bites.join("") + "</ul></section>";
-      if (!rows.length && !pq.length && !bites.length) h += '<div class="empty">Nothing found. Try fewer or different words.</div>';
+      if (!subs.length && !rows.length && !pq.length && !bites.length) h += '<div class="empty">Nothing found. Try fewer or different words.</div>';
       page(h, true);
       if (pq.length) { var box = $("sq"); box.innerHTML = pq.slice(0, 15).map(qCard).join(""); bindMcqs(box); bindToggles(box); bindActions(box); }
     });
@@ -680,6 +762,8 @@
     if (h[0] === "gs" && h[1]) return { name: "paper", paper: h[1] };
     if (h[0] === "search") return { name: "search", q: h.slice(1).join("/") };
     if (h[0] === "pyq") return { name: "pyq", kind: h[1] || "", query: query };
+    if (h[0] === "subjects" && h[1]) return { name: "subject", id: h[1] };
+    if (h[0] === "subjects") return { name: "subjects" };
     if (h[0] === "practice") return { name: "practice", query: query };
     if (h[0] === "cards") return { name: "cards" };
     if (h[0] === "saved") return { name: "saved", tab: h[1] };
@@ -700,6 +784,8 @@
     } else if (r.name === "paper") renderPaper(r.paper);
     else if (r.name === "search") { if ($("q").value !== r.q) $("q").value = r.q; renderSearch(r.q); }
     else if (r.name === "pyq") renderPyq(r.kind, r.query);
+    else if (r.name === "subjects") renderSubjects();
+    else if (r.name === "subject") renderSubject(r.id);
     else if (r.name === "practice") renderPractice(r.query);
     else if (r.name === "cards") renderCards();
     else if (r.name === "saved") renderSaved(r.tab);
