@@ -354,7 +354,7 @@ mark{background:var(--fact);color:inherit;border-radius:3px;padding:0 2px}
       var h = '<div class="wrap">';
       h += '<div class="eyebrow">Daily current affairs</div><h1>' + esc(fmt(date, { weekday: "long", day: "numeric", month: "long", year: "numeric" })) + "</h1>";
       h += '<div class="meta"><span>' + n + " topics</span><span>·</span><span>" + (day.stories_read ? day.stories_read + " stories read" : "The Hindu & Indian Express") +
-        (m.lite ? '</span><span class="litechip" title="Written by a faster model while the free daily limit was used up. It is rewritten in full automatically when there is room.">Short version · full notes coming</span><span>' : "") +
+        (m.lite ? '</span><span class="litechip" title="Written by a faster model while the free daily limit was used up. It is rewritten in full automatically when free requests and the day's stories allow.">Short version</span><span>' : "") +
         '</span><div class="pager"><a class="pbtn" aria-disabled="' + !older + '" href="' + (older ? "#/d/" + older.date : "#") + '">← Older</a><a class="pbtn" aria-disabled="' + !newer + '" href="' + (newer ? "#/d/" + newer.date : "#") + '">Newer →</a></div></div>';
       h += '<div class="progress"><span id="pg-t">' + done + " of " + n + ' revised</span><div class="bar"><i id="pg-b" style="width:' + (100 * done / n) + '%"></i></div></div>';
       h += '<div class="grid">' + day.notes.map(function (t, i) {
