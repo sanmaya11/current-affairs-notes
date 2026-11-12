@@ -209,14 +209,15 @@
       return '<a class="navlink' + (on ? " on" : "") + '" href="' + href + '">' + icon(ic) + label + (n ? '<span class="n ' + (cls || "") + '">' + n + "</span>" : "") + "</a>";
     };
     $("nav").innerHTML =
-      link("#/", "home", "Home", r.name === "home") +
-      link(M[0] ? "#/d/" + M[0].date : "#/", "news", "Latest notes", r.name === "day" && M[0] && r.day === M[0].date) +
-      link("#/subjects", "layers", "Subjects &amp; syllabus", r.name === "subjects" || r.name === "subject") +
-      link("#/pyq", "book", "Previous year questions", r.name === "pyq") +
-      link("#/practice", "check", "Practice MCQs", r.name === "practice") +
+      link("#/", "home", "Front page", r.name === "home") +
+      link(M[0] ? "#/d/" + M[0].date : "#/", "news", "Today", r.name === "day" && M[0] && r.day === M[0].date) +
+      link("#/subjects", "layers", "Subjects", r.name === "subjects" || r.name === "subject") +
+      link("#/pyq", "book", "PYQs", r.name === "pyq") +
+      link("#/practice", "check", "Practice", r.name === "practice") +
       link("#/cards", "cards", "Flashcards", r.name === "cards", due || "", "due") +
-      link("#/saved", "star", "Saved &amp; my notes", r.name === "saved", savedN || "") +
-      link("#/pending", "clock", "Not yet revised", r.name === "pending", (total - done) || "");
+      link("#/saved", "star", "Saved", r.name === "saved", savedN || "") +
+      link("#/pending", "clock", "To revise", r.name === "pending", (total - done) || "");
+    if ($("navd")) $("navd").innerHTML = $("nav").innerHTML;
     var month = "", h = "";
     M.forEach(function (m) {
       var mo = fmt(m.date, { month: "long", year: "numeric" });
@@ -238,7 +239,7 @@
   function page(html, wide, withRail) {
     app.classList.toggle("norail", !withRail);
     if (!withRail) rail.innerHTML = "";
-    main.innerHTML = '<div class="wrap' + (wide ? " wide" : "") + '">' + mast() + html + "</div>";
+    main.innerHTML = '<div class="wrap' + (wide ? " wide" : "") + '">' + html + "</div>";
     tickHud();
   }
   function mast() {
@@ -251,10 +252,10 @@
     var n = new Date();
     d.textContent = n.toLocaleDateString("en-IN", { weekday: "short", day: "2-digit", month: "short", year: "numeric" });
     var e = $("hud-e"), doy = Math.floor((n - new Date(n.getFullYear(), 0, 0)) / 864e5);
-    var ed = "Vol. " + (n.getFullYear() - 2025) + " · Nº " + String(doy).padStart(3, "0") + " · " + M.length + " editions archived";
+    var ed = "Vol. " + (n.getFullYear() - 2025) + " · Nº " + String(doy).padStart(3, "0");
     if (e) e.textContent = ed;
     var e2 = $("hud-e2"); if (e2) e2.textContent = ed;
-    t.textContent = n.toLocaleTimeString("en-GB") + " IST";
+    t.textContent = n.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }) + " IST";
     clearTimeout(hudTimer); hudTimer = setTimeout(tickHud, 1000);
   }
 
@@ -267,31 +268,37 @@
       M.forEach(function (m) { total += m.topics.length; done += revCount(m); });
       var month = U.attempts.filter(function (a) { return a.t > Date.now() - 30 * DAY_MS; });
       var right = month.filter(function (a) { return a.ok; }).length;
-      var pyqAttempted = {}; U.attempts.forEach(function (a) { if (a.s === "pyq") pyqAttempted[a.t] = 1; });
       var prelimsN = PYQ ? PYQ.questions.filter(function (q) { return q.exam === "Prelims"; }).length : 0;
-      var hour = new Date().getHours(), hello = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
-      var st = streak();
-      var h = '<div class="eyebrow">' + esc(new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" })) + "</div>" +
-        "<h1>" + hello + "</h1>" + '<div class="meta">' + (st ? '<span class="streak">🔥 ' + st + "-day streak</span>" : "<span>Study something today to start a streak.</span>") + "</div>";
-      h += '<div class="tiles">' +
-        tile(latest ? "#/d/" + latest.date : "#/", "Latest notes", latest ? latest.topics.length : 0, latest ? fmt(latest.date, { day: "numeric", month: "short" }) + " · topics" : "none yet") +
-        tile("#/pending", "Revised", pct(done, total) + "%", done + " of " + total + " topics") +
-        tile("#/practice", "Practice accuracy", month.length ? pct(right, month.length) + "%" : "–", month.length + " answered in 30 days") +
-        tile("#/cards", "Flashcards due", cardsDue(), Object.keys(U.cards).length + " cards learning") + "</div>";
-      if (day) {
-        var facts = (day.quick_bites || []).map(function (b) { return esc(b.fact); });
-        if (facts.length) {
-          var items = facts.map(function (f) { return "<span>" + f + "</span>"; }).join("");
-          h += '<div class="ticker" aria-label="Quick bites"><b>Quick bites</b><div class="viewport"><div class="track">' + items + items + "</div></div></div>";
-        }
-        h += '<h2 class="sec-title">front page<a href="#/d/' + latest.date + '">All ' + day.notes.length + " topics →</a></h2>";
-        h += '<div class="front">' + topicCard(latest.date, day.notes[0], 0, true) +
-          day.notes.slice(1, 7).map(function (t, i) { return topicCard(latest.date, t, i + 1); }).join("") + "</div>";
+      if (!day) { page('<div class="empty">No notes yet. They appear here after the first run.</div>', true); return; }
+      var d = latest.date, notes = day.notes;
+      var kick = function (t) { return esc((t.gs_papers || []).join(" · ")); };
+      var href = function (i) { return "#/d/" + d + "/" + (i + 1); };
+      var h = '<div class="front">';
+      var L = notes[0];
+      h += '<a class="story lead" href="' + href(0) + '"><span class="kicker">' + kick(L) + "</span><h2>" + esc(L.title) + "</h2><p>" + esc(L.why_in_news) +
+        '</p><span class="readmore">Read the full note →</span></a>';
+      h += '<div class="col">' + notes.slice(1, 4).map(function (t, k) {
+        return '<a class="story" href="' + href(k + 1) + '"><span class="kicker">' + kick(t) + "</span><h3>" + esc(t.title) + "</h3><p>" + esc(t.why_in_news) + "</p></a>";
+      }).join("") + "</div>";
+      var bites = (day.quick_bites || []).slice(0, 8);
+      h += '<aside class="briefing"><h4>The Briefing</h4><p class="sub">Quick facts for Prelims · ' + esc(fmt(d, { day: "numeric", month: "long" })) + "</p>" +
+        (bites.length ? "<ol>" + bites.map(function (b) { return "<li>" + esc(b.fact) + "</li>"; }).join("") + "</ol>" : '<p class="sub">No quick bites today.</p>') + "</aside>";
+      h += "</div>";
+      if (notes.length > 4) {
+        h += '<h2 class="sec-title">More from ' + esc(fmt(d, { weekday: "long" })) + '<a href="#/d/' + d + '">All ' + notes.length + " stories →</a></h2>";
+        h += '<div class="more-grid">' + notes.slice(4, 12).map(function (t, k) {
+          return '<a class="story" href="' + href(k + 4) + '"><span class="kicker">' + kick(t) + "</span><h3>" + esc(t.title) + "</h3><p>" + esc(t.why_in_news) + "</p></a>";
+        }).join("") + "</div>";
       }
-      h += '<div class="grid" style="margin-top:8px"><section class="panel" style="margin:0"><h2>Accuracy by subject</h2>' + accuracyBars() + "</section>" +
-        '<section class="panel" style="margin:0"><h2>Previous year questions</h2>' + pyqSummary(prelimsN) + "</section></div>";
+      var st = streak();
+      h += '<div class="band"><section><h4>Your desk</h4>' +
+        '<a class="stat" href="#/pending">Revised<b>' + pct(done, total) + '%</b></a>' +
+        '<a class="stat" href="#/practice">Practice accuracy<b>' + (month.length ? pct(right, month.length) + "%" : "–") + '</b></a>' +
+        '<a class="stat" href="#/cards">Flashcards due<b>' + cardsDue() + '</b></a>' +
+        '<div class="stat">Study streak<b>' + st + (st === 1 ? " day" : " days") + "</b></div></section>" +
+        "<section><h4>Accuracy by subject</h4>" + accuracyBars() + "</section>" +
+        "<section><h4>Previous year questions</h4>" + pyqSummary(prelimsN) + "</section></div>";
       page(h, true);
-      countUp();
     });
   }
   function countUp() {
