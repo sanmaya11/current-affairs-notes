@@ -826,7 +826,7 @@
   }
   window.addEventListener("hashchange", route);
 
-  var lit = null, TILT = ".tcard,.tile";
+  var lit = null, TILT = "none";  // tilt switched off: calmer
   document.addEventListener("pointermove", function (e) {
     if (e.pointerType !== "mouse") return;
     var el = e.target.closest && e.target.closest(".tcard,.tile,.qcard,.subj,.row");

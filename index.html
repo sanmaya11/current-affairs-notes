@@ -447,6 +447,72 @@ body{font-family:var(--sans);letter-spacing:-.005em;font-variant-numeric:lining-
 .day .dn{font-family:var(--display)}
 @media (prefers-reduced-motion:reduce){.aurora{animation:none}.tcard,.tile,.qcard,.subj,.row{transform:none!important}}
 @media print{.aurora,.readbar{display:none}}
+
+/* ================= calm pass: fewer effects, more air ================= */
+:root{--grid:rgba(110,150,255,.025)}
+:root[data-theme="light"]{--grid:rgba(20,50,120,.03)}
+:root[data-theme="dark"] body::after{display:none}
+body::before{background:
+  radial-gradient(900px 520px at 88% -12%,rgba(0,229,255,.05),transparent 62%),
+  linear-gradient(var(--grid) 1px,transparent 1px) 0 0/56px 56px,
+  linear-gradient(90deg,var(--grid) 1px,transparent 1px) 0 0/56px 56px}
+.aurora{opacity:.18;animation:none}
+:root[data-theme="light"] .aurora{opacity:.1}
+.wordmark:hover{animation:none}
+.wordmark i{text-shadow:none}
+.mast::after{box-shadow:none;width:64px}
+
+/* labels: quieter */
+.eyebrow::before{content:none}
+.eyebrow{letter-spacing:.12em}
+.navlabel,.month{letter-spacing:.12em}
+.tagline,.edition{letter-spacing:.14em}
+.edition{color:var(--muted);opacity:1}
+.hud{letter-spacing:.08em}
+.hud .live::before{animation:none;box-shadow:none}
+.sec>h4{letter-spacing:.12em;color:var(--ink2)}
+.sec>h4::before{content:none}
+.badge{text-transform:none;letter-spacing:.02em;font-size:11px}
+.tile .k{letter-spacing:.1em}
+.tile .v{background:none;-webkit-background-clip:border-box;background-clip:border-box;color:var(--ink)}
+
+/* cards: plain surfaces, no brackets, no tilt, gentle hover */
+.tcard::before,.tile::before,.subj::before,.qcard::before,.panel::before,.topic::before,
+.tcard::after,.tile::after,.subj::after,.qcard::after,.panel::after,.topic::after{display:none}
+.tcard,.qcard,.panel,.tile,.subj,.mcq,.concept,.mains,.row,.fface,.lockcard,.topic{background:var(--card);border-color:var(--line)}
+.tcard,.tile,.qcard,.subj,.row{transform:none!important}
+.tcard:hover,.tile:hover,.row:hover,.qcard:hover,.subj:hover{border-color:var(--line2);box-shadow:none;background-image:radial-gradient(320px circle at var(--mx) var(--my),color-mix(in srgb,var(--accent) 5%,transparent),transparent 70%)}
+.tnum{-webkit-text-stroke:0;color:var(--line2);opacity:1;font-weight:500}
+.why{background:var(--accent-soft)}
+
+/* lead story: a quiet accent instead of the animated rainbow edge */
+.front .lead{border:1px solid var(--line2);background:var(--card)}
+.front .lead::before{display:none}
+.front .lead:hover{background-image:radial-gradient(420px circle at var(--mx) var(--my),color-mix(in srgb,var(--accent) 5%,transparent),transparent 70%)}
+.front .lead{box-shadow:inset 3px 0 0 var(--accent)}
+.kicker{background:none;color:var(--accent);padding:0;box-shadow:none;letter-spacing:.14em}
+
+/* ticker: calmer */
+.ticker{background:none;border-color:var(--line)}
+.ticker b{background:none;color:var(--accent);border-right:1px solid var(--line)}
+.ticker b::before{animation:none;background:var(--accent)}
+.ticker .track{animation-duration:200s}
+.ticker span{color:var(--muted)}
+.ticker span::before{content:"·";font-size:14px}
+
+/* controls: no neon */
+.go{box-shadow:none}
+.pchip.on,.seg button.on{box-shadow:none}
+.tab.on{text-shadow:none}
+.bar i,.brow .bar i{box-shadow:none}
+.logo{box-shadow:none}
+.tick.yes,.iconbtn.rev.on,.opt.right{box-shadow:none}
+.opt.right{border-color:var(--good)}
+.navlink.on svg.i{filter:none}
+.readbar{box-shadow:none;height:2px}
+.topic .prose p:first-of-type::first-letter{text-shadow:none;font-size:3em}
+.side{backdrop-filter:none;-webkit-backdrop-filter:none;background:var(--side)}
+@media (prefers-reduced-motion:no-preference){.tcard,.qcard,.tile,.subj,.panel{animation-duration:.3s}}
 </style>
 </head>
 <body>
@@ -483,6 +549,6 @@ body{font-family:var(--sans);letter-spacing:-.005em;font-variant-numeric:lining-
   <nav class="rail" id="rail" aria-label="On this page"></nav>
 </div>
 <script>window.NOTES_SITE = true;</script>
-<script src="app.js?v=cecee40245"></script>
+<script src="app.js?v=b0c303f517"></script>
 </body>
 </html>
