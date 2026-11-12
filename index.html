@@ -7,7 +7,7 @@
 <title>Current Affairs Notes</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&family=Playfair+Display:wght@600;700;800;900&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=Libre+Franklin:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#04060c; --side:#060914; --card:#0a0f1d; --ink:#e9f1ff; --ink2:#b3c1dc; --muted:#6c7c9c;
@@ -513,6 +513,37 @@ body::before{background:
 .topic .prose p:first-of-type::first-letter{text-shadow:none;font-size:3em}
 .side{backdrop-filter:none;-webkit-backdrop-filter:none;background:var(--side)}
 @media (prefers-reduced-motion:no-preference){.tcard,.qcard,.tile,.subj,.panel{animation-duration:.3s}}
+
+/* ================= newspaper type ================= */
+:root{
+  --mast:"UnifrakturMaguntia","Old English Text MT",serif;
+  --display:"Playfair Display",Georgia,serif;
+  --serif:"Playfair Display",Georgia,serif;
+  --body:"Source Serif 4","Iowan Old Style",Georgia,serif;
+  --label:"Libre Franklin","Franklin Gothic Medium","Helvetica Neue",Arial,sans-serif;
+  --mono:var(--label);
+  --sans:var(--body);
+}
+body{font-family:var(--body);font-size:17px;letter-spacing:0}
+.prose p,.list li,.statics li,.facts li,.concept span,.why,.explain,.outline p,.tcard p,.row p,.fb{font-family:var(--body)}
+.prose p{font-size:17.5px;line-height:1.7}
+.tcard p{font-size:14.5px}
+/* masthead: blackletter nameplate */
+.wordmark{font:400 clamp(46px,7vw,88px)/1 var(--mast);letter-spacing:0;background:none;-webkit-background-clip:border-box;background-clip:border-box;color:var(--ink)}
+.wordmark i{-webkit-text-fill-color:currentColor;color:var(--ink)}
+/* labels, dates, navigation: Franklin-style sans */
+.eyebrow,.navlabel,.month,.qhead,.tab,.meta,.score,.from,.tagline,.edition,.hud,.hud b,.badge,.kicker,.tile .k,.sec>h4,.why b,.ticker b,.ticker span,
+.navlink,.btn,.iconbtn,.go,.pchip,.seg button,.themebtn,.kw,.day .dw,.brand span,.search input,.filters select,.filters input,.setup select,.toggle,.rail a,.rail h6,.disclaimer,.litechip,h2.sec-title a,#stat{font-family:var(--label)}
+.eyebrow,.navlabel,.month,.tagline,.edition,.tile .k,.sec>h4,.why b,.kicker,.ticker b,.rail h6{font-weight:600;letter-spacing:.08em}
+.hud,.hud b{letter-spacing:.04em}
+.tcard .no,.tnum{font-family:var(--display)}
+.tnum{font-weight:700;font-style:italic}
+.tile .v{font-family:var(--display);font-weight:700}
+h1,h2.sec-title,.panel h2,.topic h2,.tcard h3,.row h3,.subj h3,.qtext,.mcq .qq,.mains .q,.fface .ft{font-family:var(--display)}
+h2.sec-title,.panel h2{text-transform:none;font-weight:700;font-style:italic}
+.qtext,.mcq .qq,.mains .q{font-family:var(--body);font-weight:600}
+.opt{font-family:var(--body)}
+.topic .prose p:first-of-type::first-letter{font-family:var(--display);font-weight:800}
 </style>
 </head>
 <body>
