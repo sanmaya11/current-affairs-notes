@@ -243,7 +243,7 @@
   }
   function mast() {
     return '<header class="mast"><div class="aurora"></div><div><a class="wordmark" href="#/">the notes<i>.</i></a><span class="tagline">UPSC CSE · daily intelligence brief</span><span class="edition" id="hud-e"></span></div>' +
-      '<div class="hud"><em class="live">live</em><b id="hud-d"></b><b id="hud-t"></b></div></header>';
+      '<div class="hud"><b id="hud-d"></b><span class="edition-inline" id="hud-e2"></span><b id="hud-t"></b></div></header>';
   }
   var hudTimer;
   function tickHud() {
@@ -251,7 +251,9 @@
     var n = new Date();
     d.textContent = n.toLocaleDateString("en-IN", { weekday: "short", day: "2-digit", month: "short", year: "numeric" });
     var e = $("hud-e"), doy = Math.floor((n - new Date(n.getFullYear(), 0, 0)) / 864e5);
-    if (e) e.textContent = "Vol. " + (n.getFullYear() - 2025) + " · Issue Nº " + String(doy).padStart(3, "0") + " · " + M.length + " editions archived";
+    var ed = "Vol. " + (n.getFullYear() - 2025) + " · Nº " + String(doy).padStart(3, "0") + " · " + M.length + " editions archived";
+    if (e) e.textContent = ed;
+    var e2 = $("hud-e2"); if (e2) e2.textContent = ed;
     t.textContent = n.toLocaleTimeString("en-GB") + " IST";
     clearTimeout(hudTimer); hudTimer = setTimeout(tickHud, 1000);
   }
@@ -861,12 +863,12 @@
   $("menubtn").addEventListener("click", function () { document.body.classList.add("menu"); });
   $("scrim").addEventListener("click", function () { document.body.classList.remove("menu"); });
 
-  var themes = ["dark", "light"], theme = store.get("theme", "dark"); if (themes.indexOf(theme) < 0) theme = "dark";
+  var themes = ["light", "dark"], theme = store.get("theme2", "light"); if (themes.indexOf(theme) < 0) theme = "dark";
   function applyTheme() {
     document.documentElement.setAttribute("data-theme", theme);
-    $("theme").textContent = theme[0].toUpperCase() + theme.slice(1) + " theme";
+    $("theme").textContent = theme === "light" ? "Newsprint" : "Night";
   }
-  $("theme").addEventListener("click", function () { theme = themes[(themes.indexOf(theme) + 1) % themes.length]; store.set("theme", theme); applyTheme(); });
+  $("theme").addEventListener("click", function () { theme = themes[(themes.indexOf(theme) + 1) % themes.length]; store.set("theme2", theme); applyTheme(); });
   applyTheme();
 
   /* ================================================================ password lock (site) + boot */
