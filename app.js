@@ -242,7 +242,7 @@
     tickHud();
   }
   function mast() {
-    return '<header class="mast"><div><a class="wordmark" href="#/">the notes<i>.</i></a><span class="tagline">UPSC CSE · daily intelligence brief</span><span class="edition" id="hud-e"></span></div>' +
+    return '<header class="mast"><div class="aurora"></div><div><a class="wordmark" href="#/">the notes<i>.</i></a><span class="tagline">UPSC CSE · daily intelligence brief</span><span class="edition" id="hud-e"></span></div>' +
       '<div class="hud"><em class="live">live</em><b id="hud-d"></b><b id="hud-t"></b></div></header>';
   }
   var hudTimer;
@@ -289,6 +289,17 @@
       h += '<div class="grid" style="margin-top:8px"><section class="panel" style="margin:0"><h2>Accuracy by subject</h2>' + accuracyBars() + "</section>" +
         '<section class="panel" style="margin:0"><h2>Previous year questions</h2>' + pyqSummary(prelimsN) + "</section></div>";
       page(h, true);
+      countUp();
+    });
+  }
+  function countUp() {
+    main.querySelectorAll(".tile .v").forEach(function (el) {
+      var m = /^(\d+)(%?)$/.exec(el.textContent.trim()); if (!m || +m[1] === 0) return;
+      var end = +m[1], t0 = performance.now();
+      (function step(t) {
+        var k = Math.min(1, (t - t0) / 700); el.textContent = Math.round(end * (1 - Math.pow(1 - k, 3))) + m[2];
+        if (k < 1) requestAnimationFrame(step);
+      })(t0);
     });
   }
   function tile(href, k, v, s) { return '<a class="tile" href="' + href + '"><div class="k">' + k + '</div><div class="v">' + v + '</div><div class="s">' + esc(s) + "</div></a>"; }
@@ -814,6 +825,23 @@
     else renderHome();
   }
   window.addEventListener("hashchange", route);
+
+  var lit = null, TILT = ".tcard,.tile";
+  document.addEventListener("pointermove", function (e) {
+    if (e.pointerType !== "mouse") return;
+    var el = e.target.closest && e.target.closest(".tcard,.tile,.qcard,.subj,.row");
+    if (lit && lit !== el) { lit.style.removeProperty("--rx"); lit.style.removeProperty("--ry"); }
+    lit = el; if (!el) return;
+    var r = el.getBoundingClientRect(), x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
+    el.style.setProperty("--mx", x * 100 + "%"); el.style.setProperty("--my", y * 100 + "%");
+    if (el.matches(TILT)) { el.style.setProperty("--rx", ((0.5 - y) * 5).toFixed(2) + "deg"); el.style.setProperty("--ry", ((x - 0.5) * 6).toFixed(2) + "deg"); }
+  });
+  window.addEventListener("scroll", function () {
+    var bar = $("readbar"), long = main.querySelector(".topic");
+    if (!long) { bar.style.width = "0"; return; }
+    var max = document.documentElement.scrollHeight - innerHeight;
+    bar.style.width = (max > 0 ? 100 * scrollY / max : 0) + "%";
+  }, { passive: true });
   if ("scrollRestoration" in history) history.scrollRestoration = "manual";
 
   var tmr;

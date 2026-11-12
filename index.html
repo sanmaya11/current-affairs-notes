@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <title>Current Affairs Notes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#04060c; --side:#060914; --card:#0a0f1d; --ink:#e9f1ff; --ink2:#b3c1dc; --muted:#6c7c9c;
@@ -15,10 +18,10 @@
   --gs1:#ffb020; --gs2:#5b8cff; --gs3:#2dffb3; --gs4:#b36bff; --essay:#ff4fb0; --prelims:#8fa3c4;
   --glow:0 0 0 1px rgba(0,229,255,.18),0 0 28px rgba(0,229,255,.12);
   --shadow:0 1px 0 rgba(255,255,255,.03) inset,0 10px 34px rgba(0,0,0,.45);
-  --display:ui-serif,"New York","Iowan Old Style","Playfair Display",Georgia,serif;
-  --serif:ui-serif,"New York","Iowan Old Style",Charter,Georgia,serif;
-  --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
-  --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+  --display:"Playfair Display",ui-serif,"New York",Georgia,serif;
+  --serif:"Playfair Display",ui-serif,"New York",Georgia,serif;
+  --mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --sans:"Space Grotesk",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
   color-scheme:dark;
 }
 :root[data-theme="light"]{
@@ -361,7 +364,7 @@ h2.sec-title a{order:3;font:500 11px var(--mono);letter-spacing:.14em;text-trans
   .tcard,.qcard,.tile,.subj,.panel{animation:rise .45s cubic-bezier(.2,.7,.2,1) both}
   .grid .tcard:nth-child(2){animation-delay:.04s}.grid .tcard:nth-child(3){animation-delay:.08s}.grid .tcard:nth-child(4){animation-delay:.12s}
   .grid .tcard:nth-child(5){animation-delay:.16s}.grid .tcard:nth-child(6){animation-delay:.2s}
-  @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  @keyframes rise{from{opacity:0;translate:0 10px}to{opacity:1;translate:none}}
 }
 @media (max-width:880px){.mast{align-items:flex-start;flex-direction:column;gap:14px}.hud{align-items:flex-start;flex-direction:row;flex-wrap:wrap;gap:6px 16px}}
 @media print{body::before{display:none}.mast{display:none}}
@@ -406,6 +409,44 @@ h2.sec-title a{order:3;font:500 11px var(--mono);letter-spacing:.14em;text-trans
 @media (max-width:640px){.front{grid-template-columns:1fr}}
 @media (max-width:880px){.ticker b{padding:0 10px}}
 @media print{.ticker{display:none}}
+
+/* ================= round 3: type, light, depth ================= */
+body{font-family:var(--sans);letter-spacing:-.005em;font-variant-numeric:lining-nums}
+.tcard h3,.row h3,.subj h3,.topic h2,.qtext,.mcq .qq,.mains .q,.fface .ft{font-family:var(--display)}
+.tcard h3{font-weight:700;letter-spacing:-.01em}
+.prose p{font-size:16.5px;line-height:1.75}
+.topic .prose p:first-of-type::first-letter{float:left;font:800 3.4em/.82 var(--display);margin:6px 10px 0 0;color:var(--accent);text-shadow:0 0 18px color-mix(in srgb,var(--accent) 45%,transparent)}
+
+/* glass sidebar */
+.side{background:color-mix(in srgb,var(--side) 72%,transparent);backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%)}
+
+/* aurora behind the masthead */
+.mast{isolation:isolate}
+.aurora{position:absolute;inset:-60px -40px -20px -40px;z-index:-1;pointer-events:none;filter:blur(40px);opacity:.55;
+  background:radial-gradient(40% 60% at 15% 40%,color-mix(in srgb,var(--accent) 45%,transparent),transparent 70%),
+             radial-gradient(35% 55% at 60% 30%,color-mix(in srgb,var(--accent2) 45%,transparent),transparent 70%),
+             radial-gradient(30% 50% at 90% 60%,color-mix(in srgb,var(--essay) 30%,transparent),transparent 70%);
+  animation:drift 16s ease-in-out infinite alternate}
+:root[data-theme="light"] .aurora{opacity:.28}
+@keyframes drift{to{transform:translateX(4%) translateY(-6%) scale(1.06)}}
+.wordmark{background:linear-gradient(180deg,var(--ink) 55%,color-mix(in srgb,var(--ink) 55%,var(--accent)));-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:900}
+.wordmark i{-webkit-text-fill-color:var(--accent)}
+
+/* cards: a light that follows the pointer, and a slight 3D tilt */
+.tcard,.tile,.qcard,.subj,.row{--mx:50%;--my:50%;transition:transform .18s ease,border-color .2s,box-shadow .2s;transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg))}
+.tcard:hover,.tile:hover,.qcard:hover,.subj:hover,.row:hover{background-image:radial-gradient(280px circle at var(--mx) var(--my),color-mix(in srgb,var(--accent) 13%,transparent),transparent 65%),linear-gradient(180deg,color-mix(in srgb,var(--card) 100%,#fff 3%),var(--card))}
+.front .lead:hover{background-image:radial-gradient(420px circle at var(--mx) var(--my),color-mix(in srgb,var(--accent) 16%,transparent),transparent 65%),radial-gradient(520px 260px at 0 0,var(--accent-soft),transparent 70%),linear-gradient(180deg,color-mix(in srgb,var(--card) 100%,#fff 4%),var(--card))}
+
+.tile .v,.tnum,.day .dn,.wordmark,h1,.score b,.hud b{font-variant-numeric:lining-nums tabular-nums}
+/* reading progress */
+.readbar{position:fixed;top:0;left:0;height:2px;width:0;z-index:60;background:linear-gradient(90deg,var(--accent2),var(--accent));box-shadow:0 0 12px var(--accent);transition:width .08s linear}
+
+/* nav polish */
+.navlink{transition:background .15s,color .15s}
+.navlink svg.i{opacity:.75}.navlink.on svg.i{opacity:1;color:var(--accent);filter:drop-shadow(0 0 6px var(--accent))}
+.day .dn{font-family:var(--display)}
+@media (prefers-reduced-motion:reduce){.aurora{animation:none}.tcard,.tile,.qcard,.subj,.row{transform:none!important}}
+@media print{.aurora,.readbar{display:none}}
 </style>
 </head>
 <body>
@@ -414,6 +455,7 @@ h2.sec-title a{order:3;font:500 11px var(--mono);letter-spacing:.14em;text-trans
   <b>Current Affairs</b>
 </header>
 <div class="scrim" id="scrim"></div>
+<div class="readbar" id="readbar"></div>
 <div class="lock" id="lock" hidden>
   <form class="lockcard" id="lockform">
     <div class="logo">CA</div>
@@ -441,6 +483,6 @@ h2.sec-title a{order:3;font:500 11px var(--mono);letter-spacing:.14em;text-trans
   <nav class="rail" id="rail" aria-label="On this page"></nav>
 </div>
 <script>window.NOTES_SITE = true;</script>
-<script src="app.js?v=02298236bb"></script>
+<script src="app.js?v=cecee40245"></script>
 </body>
 </html>
