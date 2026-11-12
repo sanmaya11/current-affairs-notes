@@ -238,7 +238,20 @@
   function page(html, wide, withRail) {
     app.classList.toggle("norail", !withRail);
     if (!withRail) rail.innerHTML = "";
-    main.innerHTML = '<div class="wrap' + (wide ? " wide" : "") + '">' + html + "</div>";
+    main.innerHTML = '<div class="wrap' + (wide ? " wide" : "") + '">' + mast() + html + "</div>";
+    tickHud();
+  }
+  function mast() {
+    return '<header class="mast"><div><a class="wordmark" href="#/">the notes<i>.</i></a><span class="tagline">UPSC CSE · daily intelligence brief</span></div>' +
+      '<div class="hud"><em class="live">live</em><b id="hud-d"></b><b id="hud-t"></b></div></header>';
+  }
+  var hudTimer;
+  function tickHud() {
+    var d = $("hud-d"), t = $("hud-t"); if (!d) return;
+    var n = new Date();
+    d.textContent = n.toLocaleDateString("en-IN", { weekday: "short", day: "2-digit", month: "short", year: "numeric" });
+    t.textContent = n.toLocaleTimeString("en-GB") + " IST";
+    clearTimeout(hudTimer); hudTimer = setTimeout(tickHud, 1000);
   }
 
   /* ================================================================ home */
@@ -812,12 +825,12 @@
   $("menubtn").addEventListener("click", function () { document.body.classList.add("menu"); });
   $("scrim").addEventListener("click", function () { document.body.classList.remove("menu"); });
 
-  var themes = ["auto", "light", "dark"], theme = store.get("theme", "auto");
+  var themes = ["dark", "light"], theme = store.get("theme", "dark"); if (themes.indexOf(theme) < 0) theme = "dark";
   function applyTheme() {
-    if (theme === "auto") document.documentElement.removeAttribute("data-theme"); else document.documentElement.setAttribute("data-theme", theme);
+    document.documentElement.setAttribute("data-theme", theme);
     $("theme").textContent = theme[0].toUpperCase() + theme.slice(1) + " theme";
   }
-  $("theme").addEventListener("click", function () { theme = themes[(themes.indexOf(theme) + 1) % 3]; store.set("theme", theme); applyTheme(); });
+  $("theme").addEventListener("click", function () { theme = themes[(themes.indexOf(theme) + 1) % themes.length]; store.set("theme", theme); applyTheme(); });
   applyTheme();
 
   /* ================================================================ password lock (site) + boot */
