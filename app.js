@@ -275,19 +275,23 @@
       var href = function (i) { return "#/d/" + d + "/" + (i + 1); };
       var h = '<div class="front">';
       var L = notes[0];
-      h += '<a class="story lead" href="' + href(0) + '"><span class="kicker">' + kick(L) + "</span><h2>" + esc(L.title) + "</h2><p>" + esc(L.why_in_news) +
+      h += '<a class="story lead" href="' + href(0) + '">' + cover(L, "hero") + '<span class="kicker">' + kick(L) + "</span><h2>" + esc(L.title) + "</h2><p>" + esc(L.why_in_news) +
         '</p><span class="readmore">Read the full note →</span></a>';
       h += '<div class="col">' + notes.slice(1, 4).map(function (t, k) {
-        return '<a class="story" href="' + href(k + 1) + '"><span class="kicker">' + kick(t) + "</span><h3>" + esc(t.title) + "</h3><p>" + esc(t.why_in_news) + "</p></a>";
+        return '<a class="story side" href="' + href(k + 1) + '"><div><span class="kicker">' + kick(t) + "</span><h3>" + esc(t.title) + "</h3><p>" + esc(t.why_in_news) + "</p></div>" + cover(t, "sq") + "</a>";
       }).join("") + "</div>";
       var bites = (day.quick_bites || []).slice(0, 8);
       h += '<aside class="briefing"><h4>The Briefing</h4><p class="sub">Quick facts for Prelims · ' + esc(fmt(d, { day: "numeric", month: "long" })) + "</p>" +
         (bites.length ? "<ol>" + bites.map(function (b) { return "<li>" + esc(b.fact) + "</li>"; }).join("") + "</ol>" : '<p class="sub">No quick bites today.</p>') + "</aside>";
       h += "</div>";
+      var nums = [];
+      notes.forEach(function (t, i) { (t.prelims_facts || []).forEach(function (f) { var m = /(₹\s?[\d,.]+\s?(?:lakh|crore)?(?:\s?crore)?|\d[\d,.]*\s?(?:%|per cent|crore|lakh|km|GW|MW|million|billion)?)/i.exec(f); if (m && nums.length < 4 && (/[%₹]|crore|lakh|km|GW|MW|million|billion|per cent/i.test(m[1]) || m[1].replace(/\D/g, "").length >= 3) && !/^(1[89]|20)\d\d\.?$/.test(m[1].trim()) && !/(Section|Article|Rule|No\.)\s*$/i.test(f.slice(0, m.index)) && !nums.some(function (x) { return x.i === i; })) nums.push({ n: m[1].trim(), f: f, i: i }); }); });
+      if (nums.length >= 3) h += '<div class="numbers"><h4>By the numbers</h4><div class="nrow">' + nums.map(function (x) {
+        return '<a href="' + href(x.i) + '"><b>' + esc(x.n) + "</b><span>" + esc(x.f) + "</span></a>"; }).join("") + "</div></div>";
       if (notes.length > 4) {
         h += '<h2 class="sec-title">More from ' + esc(fmt(d, { weekday: "long" })) + '<a href="#/d/' + d + '">All ' + notes.length + " stories →</a></h2>";
         h += '<div class="more-grid">' + notes.slice(4, 12).map(function (t, k) {
-          return '<a class="story" href="' + href(k + 4) + '"><span class="kicker">' + kick(t) + "</span><h3>" + esc(t.title) + "</h3><p>" + esc(t.why_in_news) + "</p></a>";
+          return '<a class="story" href="' + href(k + 4) + '">' + cover(t, "thumb") + '<span class="kicker">' + kick(t) + "</span><h3>" + esc(t.title) + "</h3><p>" + esc(t.why_in_news) + "</p></a>";
         }).join("") + "</div>";
       }
       var st = streak();
@@ -334,7 +338,60 @@
   }
   function topicCard(date, t, i, lead) {
     return '<a class="tcard' + (lead ? " lead" : "") + '" href="#/d/' + date + "/" + (i + 1) + '"><span class="tick' + (U.revised[key(date, i)] ? " yes" : "") + '" data-tick="' + i + '"></span><span class="no">' + String(i + 1).padStart(2, "0") +
-      "</span>" + (lead ? '<span class="kicker">Lead story</span>' : "") + "<h3>" + esc(t.title) + "</h3><p>" + esc(t.why_in_news) + '</p><div class="gsl">' + (t.gs_papers || []).map(badge).join("") + "</div></a>";
+      "</span>" + cover(t, "thumb") + (lead ? '<span class="kicker">Lead story</span>' : "") + "<h3>" + esc(t.title) + "</h3><p>" + esc(t.why_in_news) + '</p><div class="gsl">' + (t.gs_papers || []).map(badge).join("") + "</div></a>";
+  }
+
+  /* ---------- story artwork: original, drawn per subject, varied per story ---------- */
+  function hashStr(s) { var h = 2166136261; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+  function cover(t, cls) {
+    var g = (t.gs_papers || []).filter(function (p) { return p !== "Prelims"; })[0] || "Prelims";
+    var c = PCOLOR[g] || "--prelims", r = hashStr(t.title || ""), rnd = function (n) { r = Math.imul(r ^ (r >>> 15), 2246822507) >>> 0; return r % n; };
+    var F = function (o) { return 'style="fill:var(' + c + ');fill-opacity:' + o + '"'; }, S = function (o, w) { return 'style="fill:none;stroke:var(' + c + ');stroke-opacity:' + o + ';stroke-width:' + w + '"'; };
+    var art = "";
+    var motif = rnd(3);
+    if (g === "GS2" && motif === 1) {        // IR: a globe with meridians
+      var gx = 110 + rnd(100);
+      art += '<circle cx="' + gx + '" cy="90" r="62" ' + F(.18) + "/>" + '<circle cx="' + gx + '" cy="90" r="62" ' + S(.8, 3) + "/>";
+      for (var e = 1; e <= 3; e++) art += '<ellipse cx="' + gx + '" cy="90" rx="' + e * 18 + '" ry="62" ' + S(.55, 2) + "/>";
+      art += '<line x1="' + (gx - 62) + '" y1="90" x2="' + (gx + 62) + '" y2="90" ' + S(.55, 2) + "/>" + '<path d="M' + (gx - 54) + " 60 Q" + gx + " 70 " + (gx + 54) + ' 60" ' + S(.45, 2) + "/>" + '<path d="M' + (gx - 54) + " 120 Q" + gx + " 110 " + (gx + 54) + ' 120" ' + S(.45, 2) + "/>";
+    } else if (g === "GS2" && motif === 2) { // governance: stepped podium with a flag
+      for (var st = 0; st < 5; st++) art += '<rect x="' + (60 + st * 22) + '" y="' + (150 - st * 22) + '" width="' + (200 - st * 44) + '" height="22" ' + F(.2 + st * .15) + "/>";
+      art += '<line x1="160" y1="40" x2="160" y2="62" ' + S(.9, 3) + "/>" + '<rect x="160" y="40" width="34" height="18" ' + F(.85) + "/>";
+    } else if (g === "GS2") {                // polity: a colonnade under a pediment
+      var n = 5 + rnd(3), w = 220 / n, x0 = 50;
+      art += "<polygon points=\"40,62 160,22 280,62\" " + F(.85) + "/>" + "<rect x=\"40\" y=\"64\" width=\"240\" height=\"8\" " + F(.85) + "/>";
+      for (var i = 0; i < n; i++) art += '<rect x="' + (x0 + i * w + w * .2) + '" y="76" width="' + (w * .45) + '" height="74" ' + F(.35 + (i % 2) * .25) + "/>";
+      art += '<rect x="30" y="152" width="260" height="10" ' + F(.85) + "/>";
+    } else if (g === "GS1") {                // history, society, geography: arches
+      var k = 4 + rnd(3), aw = 260 / k;
+      for (var j = 0; j < k; j++) { var ax = 30 + j * aw; art += '<path d="M' + ax + " 170 V" + (95 + rnd(20)) + " a" + aw / 2 + " " + aw / 2 + " 0 0 1 " + aw + " 0 V170\" " + S(.75, 6) + "/>"; }
+      art += '<circle cx="' + (60 + rnd(200)) + '" cy="42" r="16" ' + F(.5) + "/>";
+    } else if (g === "GS3" && motif === 1) { // environment: layered waves
+      for (var wv = 0; wv < 5; wv++) { var y0 = 70 + wv * 22, amp = 10 + rnd(14); art += '<path d="M0 ' + y0 + " C 80 " + (y0 - amp) + ", 160 " + (y0 + amp) + ", 240 " + y0 + " S 320 " + (y0 - amp) + ' 320 ' + y0 + ' V180 H0 Z" ' + F(.12 + wv * .1) + "/>"; }
+      art += '<circle cx="' + (230 + rnd(50)) + '" cy="40" r="18" ' + F(.6) + "/>";
+    } else if (g === "GS3" && motif === 2) { // science & tech: a network of nodes
+      var nodes = []; for (var nd = 0; nd < 9; nd++) nodes.push([40 + rnd(240), 30 + rnd(120)]);
+      nodes.forEach(function (p1, ix) { var p2 = nodes[(ix + 1 + rnd(3)) % nodes.length]; art += '<line x1="' + p1[0] + '" y1="' + p1[1] + '" x2="' + p2[0] + '" y2="' + p2[1] + '" ' + S(.45, 2) + "/>"; });
+      nodes.forEach(function (p1, ix) { art += '<circle cx="' + p1[0] + '" cy="' + p1[1] + '" r="' + (ix % 3 ? 6 : 10) + '" ' + F(ix % 3 ? .55 : .9) + "/>"; });
+    } else if (g === "GS3") {                // economy: bars and a trend line
+      var b = 7 + rnd(4), bw = 240 / b, pts = [];
+      for (var q = 0; q < b; q++) { var hgt = 25 + rnd(95); art += '<rect x="' + (40 + q * bw) + '" y="' + (160 - hgt) + '" width="' + (bw * .6) + '" height="' + hgt + '" ' + F(.25 + .5 * q / b) + "/>"; pts.push((40 + q * bw + bw * .3) + "," + (150 - hgt - 8)); }
+      art += '<polyline points="' + pts.join(" ") + '" ' + S(.9, 3) + "/>";
+    } else if (g === "GS4") {                // ethics: concentric rings, off centre
+      var cx = 120 + rnd(80), cy = 80 + rnd(30);
+      for (var m = 1; m <= 6; m++) art += '<circle cx="' + cx + '" cy="' + cy + '" r="' + m * 16 + '" ' + S(.9 - m * .12, 3) + "/>";
+      art += '<circle cx="' + cx + '" cy="' + cy + '" r="7" ' + F(.9) + "/>";
+    } else {                                 // prelims & essay: a dot field with one bright cluster
+      var hx = rnd(10), hy = rnd(5);
+      for (var yy = 0; yy < 6; yy++) for (var xx = 0; xx < 12; xx++) { var near = Math.abs(xx - hx) + Math.abs(yy - hy) < 3; art += '<circle cx="' + (34 + xx * 23) + '" cy="' + (30 + yy * 24) + '" r="' + (near ? 7 : 3.5) + '" ' + F(near ? .85 : .3) + "/>"; }
+    }
+    return '<svg class="cover ' + (cls || "") + '" viewBox="0 0 320 180" preserveAspectRatio="xMidYMid slice" aria-hidden="true">' +
+      '<rect width="320" height="180" style="fill:color-mix(in srgb,var(' + c + ') 10%,var(--paper))"/>' + art + "</svg>";
+  }
+  function furtherReading(t) {
+    var q = encodeURIComponent(t.title), s = function (site) { return "https://www.google.com/search?q=site%3A" + site + "+" + q; };
+    return '<div class="srcs">Further reading: <a href="' + s("drishtiias.com") + '" target="_blank" rel="noopener">Drishti IAS ↗</a><a href="' + s("vajiramandravi.com") +
+      '" target="_blank" rel="noopener">Vajiram &amp; Ravi ↗</a><a href="' + s("pib.gov.in") + '" target="_blank" rel="noopener">PIB ↗</a><a href="' + s("thehindu.com") + '" target="_blank" rel="noopener">The Hindu ↗</a></div>';
   }
 
   /* ================================================================ day view */
@@ -379,7 +436,7 @@
     var h = '<article class="topic" id="t' + (i + 1) + '"><div class="thead"><div class="tnum">' + String(i + 1).padStart(2, "0") + "</div><div>";
     h += '<div class="gsl">' + (t.gs_papers || []).map(badge).join("") + "</div><h2>" + esc(t.title) + "</h2>";
     if (t.syllabus_area) h += '<div class="syl">' + esc(t.syllabus_area) + "</div>";
-    h += '</div></div><div class="why"><b>Why in news</b>' + esc(t.why_in_news) + "</div>";
+    h += "</div></div>" + cover(t, "hero") + '<div class="why"><b>Why in news</b>' + esc(t.why_in_news) + "</div>";
     var bg = String(t.background || "").split(/\n\s*\n/).filter(function (p) { return p.trim(); });
     if (bg.length) h += '<div class="sec prose"><h4>Background &amp; context</h4>' + bg.map(function (p) { return "<p>" + esc(p) + "</p>"; }).join("") + "</div>";
     if ((t.source_static || []).length) h += '<div class="sec"><h4>Static context from the articles</h4>' + list(t.source_static, "statics") + "</div>";
@@ -398,6 +455,7 @@
       actions("t:" + key(date, i), { kind: "topic", title: t.title, date: date, href: "#/d/" + date + "/" + (i + 1) }, key(date, i));
     if ((t.sources || []).length) h += '<div class="srcs">Read the originals: ' + t.sources.map(function (s) {
       return '<a href="' + esc(s.link) + '" target="_blank" rel="noopener">' + esc(s.source) + ": " + esc(s.title) + " ↗</a>"; }).join("") + "</div>";
+    h += furtherReading(t);
     return h + "</div></article>";
   }
   function bindToggles(root) {
