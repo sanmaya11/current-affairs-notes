@@ -242,7 +242,7 @@
     tickHud();
   }
   function mast() {
-    return '<header class="mast"><div><a class="wordmark" href="#/">the notes<i>.</i></a><span class="tagline">UPSC CSE · daily intelligence brief</span></div>' +
+    return '<header class="mast"><div><a class="wordmark" href="#/">the notes<i>.</i></a><span class="tagline">UPSC CSE · daily intelligence brief</span><span class="edition" id="hud-e"></span></div>' +
       '<div class="hud"><em class="live">live</em><b id="hud-d"></b><b id="hud-t"></b></div></header>';
   }
   var hudTimer;
@@ -250,6 +250,8 @@
     var d = $("hud-d"), t = $("hud-t"); if (!d) return;
     var n = new Date();
     d.textContent = n.toLocaleDateString("en-IN", { weekday: "short", day: "2-digit", month: "short", year: "numeric" });
+    var e = $("hud-e"), doy = Math.floor((n - new Date(n.getFullYear(), 0, 0)) / 864e5);
+    if (e) e.textContent = "Vol. " + (n.getFullYear() - 2025) + " · Issue Nº " + String(doy).padStart(3, "0") + " · " + M.length + " editions archived";
     t.textContent = n.toLocaleTimeString("en-GB") + " IST";
     clearTimeout(hudTimer); hudTimer = setTimeout(tickHud, 1000);
   }
@@ -275,8 +277,14 @@
         tile("#/practice", "Practice accuracy", month.length ? pct(right, month.length) + "%" : "–", month.length + " answered in 30 days") +
         tile("#/cards", "Flashcards due", cardsDue(), Object.keys(U.cards).length + " cards learning") + "</div>";
       if (day) {
-        h += '<h2 class="sec-title">Today\'s must-reads<a href="#/d/' + latest.date + '">All ' + day.notes.length + " topics →</a></h2>";
-        h += '<div class="grid">' + day.notes.slice(0, 6).map(function (t, i) { return topicCard(latest.date, t, i); }).join("") + "</div>";
+        var facts = (day.quick_bites || []).map(function (b) { return esc(b.fact); });
+        if (facts.length) {
+          var items = facts.map(function (f) { return "<span>" + f + "</span>"; }).join("");
+          h += '<div class="ticker" aria-label="Quick bites"><b>Quick bites</b><div class="viewport"><div class="track">' + items + items + "</div></div></div>";
+        }
+        h += '<h2 class="sec-title">front page<a href="#/d/' + latest.date + '">All ' + day.notes.length + " topics →</a></h2>";
+        h += '<div class="front">' + topicCard(latest.date, day.notes[0], 0, true) +
+          day.notes.slice(1, 7).map(function (t, i) { return topicCard(latest.date, t, i + 1); }).join("") + "</div>";
       }
       h += '<div class="grid" style="margin-top:8px"><section class="panel" style="margin:0"><h2>Accuracy by subject</h2>' + accuracyBars() + "</section>" +
         '<section class="panel" style="margin:0"><h2>Previous year questions</h2>' + pyqSummary(prelimsN) + "</section></div>";
@@ -304,9 +312,9 @@
       return '<div class="brow"><a href="#/pyq/' + k.toLowerCase() + '">' + k + '</a><div class="bar" style="--c:var(--gs2)"><i style="width:' + Math.min(100, pct(by[k], k === "Prelims" ? 1100 : k === "Mains" ? 880 : 88)) + '%"></i></div><span class="pct">' + by[k] + "</span></div>";
     }).join("") + '</div><p style="margin:14px 0 0;font-size:13.5px;color:var(--muted)">' + done + " of 66 official papers (2016–2026) processed so far. <a href=\"#/pyq\">Browse by topic →</a></p>";
   }
-  function topicCard(date, t, i) {
-    return '<a class="tcard" href="#/d/' + date + "/" + (i + 1) + '"><span class="tick' + (U.revised[key(date, i)] ? " yes" : "") + '" data-tick="' + i + '"></span><span class="no">' + String(i + 1).padStart(2, "0") +
-      "</span><h3>" + esc(t.title) + "</h3><p>" + esc(t.why_in_news) + '</p><div class="gsl">' + (t.gs_papers || []).map(badge).join("") + "</div></a>";
+  function topicCard(date, t, i, lead) {
+    return '<a class="tcard' + (lead ? " lead" : "") + '" href="#/d/' + date + "/" + (i + 1) + '"><span class="tick' + (U.revised[key(date, i)] ? " yes" : "") + '" data-tick="' + i + '"></span><span class="no">' + String(i + 1).padStart(2, "0") +
+      "</span>" + (lead ? '<span class="kicker">Lead story</span>' : "") + "<h3>" + esc(t.title) + "</h3><p>" + esc(t.why_in_news) + '</p><div class="gsl">' + (t.gs_papers || []).map(badge).join("") + "</div></a>";
   }
 
   /* ================================================================ day view */

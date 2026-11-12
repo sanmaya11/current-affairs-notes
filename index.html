@@ -365,6 +365,47 @@ h2.sec-title a{order:3;font:500 11px var(--mono);letter-spacing:.14em;text-trans
 }
 @media (max-width:880px){.mast{align-items:flex-start;flex-direction:column;gap:14px}.hud{align-items:flex-start;flex-direction:row;flex-wrap:wrap;gap:6px 16px}}
 @media print{body::before{display:none}.mast{display:none}}
+
+/* ================= round 2: front page, ticker, scanlines ================= */
+:root[data-theme="dark"] body::after{content:"";position:fixed;inset:0;z-index:50;pointer-events:none;opacity:.5;background:repeating-linear-gradient(0deg,rgba(255,255,255,.018) 0,rgba(255,255,255,.018) 1px,transparent 1px,transparent 3px)}
+.edition{display:block;margin-top:6px;font:500 10px var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--accent);opacity:.85}
+.wordmark{position:relative;display:inline-block}
+.wordmark:hover{animation:glitch .45s steps(2) 1}
+@keyframes glitch{20%{text-shadow:2px 0 var(--accent),-2px 0 var(--essay);transform:translateX(1px)}60%{text-shadow:-2px 0 var(--accent),2px 0 var(--essay);transform:translateX(-1px)}100%{text-shadow:none;transform:none}}
+
+/* ticker */
+.ticker{display:flex;align-items:stretch;border:1px solid var(--line2);border-radius:8px;overflow:hidden;margin:6px 0 4px;background:linear-gradient(90deg,var(--accent-soft),transparent)}
+.ticker b{flex:none;display:flex;align-items:center;gap:8px;padding:0 14px;background:var(--accent);color:var(--accent-ink);font:700 10.5px var(--mono);letter-spacing:.18em;text-transform:uppercase}
+.ticker b::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--accent-ink);animation:pulse 1.4s ease-in-out infinite}
+.ticker .viewport{overflow:hidden;flex:1;mask-image:linear-gradient(90deg,transparent,#000 4%,#000 96%,transparent)}
+.ticker .track{display:inline-flex;gap:46px;padding:9px 0;white-space:nowrap;animation:marquee 140s linear infinite}
+.ticker:hover .track{animation-play-state:paused}
+.ticker span{font:500 12.5px var(--mono);color:var(--ink2)}
+.ticker span::before{content:"◆";color:var(--accent);margin-right:12px;font-size:9px}
+@keyframes marquee{to{transform:translateX(-50%)}}
+
+/* newspaper front page: one lead story beside the rest */
+.front{display:grid;grid-template-columns:1.6fr 1fr 1fr;grid-auto-rows:minmax(0,auto);gap:14px;margin-bottom:28px}
+.front .lead{grid-row:span 3;padding:26px 26px 22px;display:flex;flex-direction:column;justify-content:flex-end;min-height:360px;
+  background:radial-gradient(520px 260px at 0 0,var(--accent-soft),transparent 70%),linear-gradient(180deg,color-mix(in srgb,var(--card) 100%,#fff 4%),var(--card));
+  border-color:transparent;background-clip:padding-box;position:relative}
+.front .lead{border:1px solid transparent}
+.front .lead::before{inset:-1px;width:auto;height:auto;border:0;border-radius:inherit;opacity:1;padding:1.5px;
+  background:linear-gradient(120deg,var(--accent),var(--accent2),var(--essay),var(--accent));background-size:300% 300%;animation:sweep 9s linear infinite;
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+.front .lead::after{display:none}
+@keyframes sweep{to{background-position:300% 0}}
+.front .lead h3{font:700 clamp(26px,3vw,38px)/1.12 var(--display);letter-spacing:-.02em;margin:10px 0 12px;padding-right:0}
+.front .lead p{font-size:15.5px;-webkit-line-clamp:5}
+.front .lead .no{display:none}
+.kicker{display:inline-block;align-self:flex-start;font:700 10px var(--mono);letter-spacing:.22em;text-transform:uppercase;color:var(--accent-ink);background:var(--accent);padding:3px 9px;border-radius:3px;box-shadow:0 0 16px color-mix(in srgb,var(--accent) 50%,transparent)}
+.front .tcard:not(.lead) h3{font-size:15.5px}
+.front .tcard:not(.lead) p{-webkit-line-clamp:2}
+.grid{grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+@media (max-width:1100px){.front{grid-template-columns:1fr 1fr}.front .lead{grid-column:1/-1;grid-row:auto;min-height:260px}}
+@media (max-width:640px){.front{grid-template-columns:1fr}}
+@media (max-width:880px){.ticker b{padding:0 10px}}
+@media print{.ticker{display:none}}
 </style>
 </head>
 <body>
@@ -400,6 +441,6 @@ h2.sec-title a{order:3;font:500 11px var(--mono);letter-spacing:.14em;text-trans
   <nav class="rail" id="rail" aria-label="On this page"></nav>
 </div>
 <script>window.NOTES_SITE = true;</script>
-<script src="app.js?v=5d02d01491"></script>
+<script src="app.js?v=02298236bb"></script>
 </body>
 </html>
